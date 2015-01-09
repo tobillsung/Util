@@ -1,0 +1,94 @@
+classdef Logger
+    
+    properties (Constant)
+        Level_Debug = 0;
+        Level_Info = 1;
+    end
+    
+    properties (Constant, Access = private)
+        Level_Map = containers.Map([Logger.Level_Debug, Logger.Level_Info], {'INFO', 'DEBUG'});
+    end
+    
+    methods (Static)
+        
+        function newline(aNewLineNum)
+            
+            if ~exist('aNewLineNum', 'var')
+                aNewLineNum = 1;
+            end
+            fprintf(sprintf(repmat('\n', 1, aNewLineNum)));
+        end
+        
+        function info(aMsg)
+            Logger.printMsg('INFO', aMsg, Logger.getLink());
+        end
+        
+        function debug(aMsg)
+            if Logger.level() < Logger.Level_Info % Only print if the logging level is debug
+                Logger.printMsg('DEBUG', aMsg, Logger.getLink());
+            end
+        end
+        
+        function test(aMsg, aLink)
+            if ~ exist('aLink', 'var')
+                aLink = '';
+            end
+            Logger.printMsg('TEST', aMsg, aLink);
+        end
+        
+        function theCurrLevel = level(aLevel)
+            persistent thePerLevel
+            
+            if ~ exist('aLevel', 'var') % Get method
+                if isempty(thePerLevel)
+                    thePerLevel = Logger.Level_Info;
+                end
+            else % Set method
+                thePerLevel = aLevel;
+                myLevelStr = 
+                fprintf('Loggin level is changed to %s\n', Logger.Level_Map(aLevel));
+            end
+            theCurrLevel = thePerLevel;
+        end
+    end
+    
+    methods (Static, Access = private)
+        
+        function theSplitMsg = splitMsg(aMsg)
+            theSplitMsg = regexp(aMsg, '.*', 'match', 'dotexceptnewline');
+        end
+        
+        function printMsg(aPrefix, aMsg, aLink)
+            
+            
+            mySplitMsg = Logger.splitMsg(aMsg);
+            
+            for i = 1 : numel(mySplitMsg)
+                if i == 1
+                    fprintf('%s %s : %s %s \n', datestr(now, 'mm/dd/yy HH:MM:SS'), ...
+                        aPrefix, mySplitMsg{i}, aLink)
+                else
+                    fprintf('%s : %s\n', repmat(' ', numel(aPrefix) + 18, 1), mySplitMsg{i});
+                end
+            end
+        end
+        
+        function theLink = getLink()
+            
+            myDbstack = dbstack;
+            
+            theLink = '';
+            if numel(myDbstack) > 2
+                theLink = sprintf('<a href="matlab: opentoline(''%s'',%d, 1)">Go</a>', ...
+                    which(myDbstack(3).name), myDbstack(3).line);
+            end
+        end
+        
+    end
+    
+    
+    
+    
+    
+    
+end
